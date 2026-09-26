@@ -1,0 +1,8 @@
+streamlit
+pytesseract
+Pillow
+pdf2image
+google-genai
+pydantic
+gTTS
+python-dotenv
