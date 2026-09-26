@@ -1,0 +1,16 @@
+CITY GENERAL HOSPITAL - DISCHARGE SUMMARY
+Patient Name: Ramesh Kumar | Age: 52 | Male
+Discharge Date: 25/09/2026
+
+DIAGNOSIS:
+Type 2 Diabetes Mellitus
+
+MEDICATIONS PRESCRIBED ON DISCHARGE:
+1. Tab. Metformin 500mg - BD (Twice Daily) after food x 1 month
+2. Tab. Atorvastatin 10mg - HS (At Bedtime) x 1 month
+
+FOLLOW UP INSTRUCTIONS:
+Review in Diabetology OPD in 2 weeks.
+
+WARNING SIGNS:
+Seek immediate emergency care if experiencing severe chest pain or breathlessness.

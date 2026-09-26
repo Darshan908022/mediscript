@@ -1,0 +1,108 @@
+/* Import Modern Font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Background & Main Container Layout */
+.stApp {
+    background-color: #f8fafc;
+}
+
+.main .block-container {
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+    max-width: 1100px;
+}
+
+/* Sidebar Styling */
+[data-testid="stSidebar"] {
+    background-color: #ffffff;
+    border-right: 1px solid #e2e8f0;
+}
+
+/* Headers & Hero Title */
+h1 {
+    color: #0f172a;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em;
+}
+
+h2, h3 {
+    color: #1e293b;
+    font-weight: 600 !important;
+}
+
+/* Patient Header Card */
+.patient-card {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    color: #ffffff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-bottom: 1.5rem;
+}
+
+.patient-card h3 {
+    color: #ffffff !important;
+    margin: 0 0 0.5rem 0;
+}
+
+.patient-meta {
+    font-size: 0.95rem;
+    color: #e0f2fe;
+}
+
+/* Section Cards */
+.med-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.med-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Alert Boxes */
+.safety-banner {
+    background-color: #fef2f2;
+    border-left: 5px solid #ef4444;
+    color: #991b1b;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.paused-banner {
+    background-color: #fffbebfb;
+    border-left: 5px solid #f59e0b;
+    color: #92400e;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+/* Styled Primary Buttons */
+.stButton > button {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    border: none;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+    transition: all 0.2s;
+}
+
+.stButton > button:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+}
