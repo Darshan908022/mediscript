@@ -1,107 +1,74 @@
-"""
-LLM Extraction module for MediScript.
-Parses raw OCR text into structured JSON using Google Gemini API.
-"""
-
 import os
 import json
-from typing import Dict, Any
 from google import genai
-from google.genai import types
-from dotenv import load_dotenv
+from pydantic import BaseModel, Field
+from typing import List, Optional
 
-load_dotenv()
+# Fetch API Key safely from environment variable
+api_key = os.getenv("GEMINI_API_KEY")
 
-# Initialize Google GenAI Client
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# Initialize Gemini client safely
+if api_key:
+    client = genai.Client(api_key=api_key)
+else:
+    client = genai.Client()
 
-
-client = genai.Client(api_key=api_key) if api_key else genai.Client()
-
-EXTRACTION_PROMPT_TEMPLATE = """
-You are an expert medical document parser. Extract prescription and medical summary details from the raw discharge summary text provided below.
-
-Strictly adhere to the following rules:
-1. Extract patient_name, discharge_date, follow_up_instructions, warning_signs, and medications list.
-2. For each medication, extract:
-   - raw_text: exact text snippet describing the medication
-   - medicine_name: brand or generic name
-   - dose: e.g., '500mg', '1 tablet'
-   - frequency: e.g., 'BD', 'TDS', 'OD', 'Once daily'
-   - duration: e.g., '5 days', '1 month'
-   - timing_instructions: e.g., 'After food', 'At bedtime'
-   - confidence_score: float value between 0.0 and 1.0 indicating clarity
-   - ocr_uncertainty_flag: true if the dose/text is blurry, incomplete, or contains '???', otherwise false
-3. Return ONLY valid JSON adhering to this exact structure:
-
-{{
-  "patient_name": "String or null",
-  "discharge_date": "YYYY-MM-DD or string or null",
-  "medications": [
-    {{
-      "raw_text": "Tab Metformin 500mg BD x 1 month",
-      "medicine_name": "Metformin",
-      "dose": "500mg",
-      "frequency": "BD",
-      "duration": "1 month",
-      "timing_instructions": "After food",
-      "confidence_score": 0.95,
-      "ocr_uncertainty_flag": false
-    }}
-  ],
-  "follow_up_instructions": "String or null",
-  "warning_signs": ["String"]
-}}
-
-Raw Discharge Text:
-\"\"\"
-{raw_ocr_text}
-\"\"\"
-"""
-
-
-def extract_discharge_data(raw_ocr_text: str) -> Dict[str, Any]:
+def extract_medication_data(ocr_text: str) -> dict:
     """
-    Calls Google Gemini API to produce structured JSON from raw OCR text.
-    
-    :param raw_ocr_text: The plain text produced by OCR.
-    :return: Parsed dictionary matching extraction schema.
+    Parses raw OCR discharge summary text into structured JSON via Google Gemini API.
+    Handles clinical safe refusal if doses or frequencies are illegible or missing.
     """
-    prompt = EXTRACTION_PROMPT_TEMPLATE.format(raw_ocr_text=raw_ocr_text)
+    prompt = f"""
+    You are an expert medical AI assistant for MediScript.
+    Analyze the following raw OCR text extracted from a hospital discharge summary:
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            temperature=0.1,
-        )
-    )
+    ---
+    {ocr_text}
+    ---
+
+    Extract the following information into a structured JSON object:
+    1. "patient_name": String (default "N/A" if missing)
+    2. "age": Integer or String (default "N/A" if missing)
+    3. "gender": String (default "N/A" if missing)
+    4. "discharge_date": String (YYYY-MM-DD or DD/MM/YYYY, default "N/A" if missing)
+    5. "is_ambiguous": Boolean (Set to true IF ANY medication dosage, frequency, or duration is missing, blurry, incomplete, or illegible)
+    6. "refusal_reason": String (If is_ambiguous is true, explain why items were paused for safety)
+    7. "paused_items": List of strings (List specific unverified or ambiguous medication names)
+    8. "medications": List of objects with fields:
+       - "name": Medication name
+       - "dose": Dosage (e.g., 500mg)
+       - "frequency": Exact timing/frequency (e.g., Twice Daily after food)
+       - "duration": Course duration (e.g., 1 Month)
+    9. "tamil_guide": String (Clear Tamil translation of verified medication instructions)
+    10. "follow_up": String (OPD follow-up instructions)
+    11. "warning_signs": List of strings (Emergency symptoms requiring immediate medical care)
+
+    Return ONLY a valid JSON object without markdown formatting.
+    """
 
     try:
-        extracted_json = json.loads(response.text)
-        return extracted_json
-    except json.JSONDecodeError:
-        # Fallback handling in case of formatting anomalies
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+        )
+        
+        # Parse JSON response
         clean_text = response.text.replace("```json", "").replace("```", "").strip()
-        return json.loads(clean_text)
+        data = json.loads(clean_text)
+        return data
 
-
-if __name__ == "__main__":
-    # Test execution block
-    sample_text = """
-    DISCHARGE SUMMARY
-    Patient Name: Ramesh Kumar
-    Date of Discharge: 25/09/2026
-
-    Rx (Medications):
-    1. Tab Metformin 500mg BD after food x 1 month
-    2. Tab Paracetamol ??? TDS for fever x 5 days
-
-    Follow up: Cardiology OPD after 2 weeks.
-    Warning Signs: Seek emergency help if experiencing chest pain or shortness of breath.
-    """
-    
-    print("=== Sending Sample OCR Text to Gemini API ===")
-    extracted_data = extract_discharge_data(sample_text)
-    print(json.dumps(extracted_data, indent=2))
+    except Exception as e:
+        # Fallback safe error response
+        return {
+            "patient_name": "N/A",
+            "age": "N/A",
+            "gender": "N/A",
+            "discharge_date": "N/A",
+            "is_ambiguous": True,
+            "refusal_reason": f"Extraction error: {str(e)}",
+            "paused_items": ["All items paused due to API processing error."],
+            "medications": [],
+            "tamil_guide": "தகவல்களை செயலாக்குவதில் பிழை ஏற்பட்டது.",
+            "follow_up": "Consult hospital directly.",
+            "warning_signs": ["Contact hospital emergency if experiencing severe symptoms."]
+        }
